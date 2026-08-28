@@ -1,11 +1,12 @@
 const http = require('http');
 
 const licenses = {
-  'BILAL-2024-ABC': {
+    'BILAL-2026': {
     valid: true,
     username: 'bilal',
-    expires: '2025-12-31',
+    expires: '2026-12-31',
     hwid: null
+  },
   },
   'TEST-LICENSE-123': {
     valid: true,
