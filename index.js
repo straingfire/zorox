@@ -1,74 +1,46 @@
 const http = require('http');
 
-// Lisans veritabanı (basit örnek)
 const licenses = {
   'BILAL-2024-ABC': {
     valid: true,
     username: 'bilal',
     expires: '2025-12-31',
     hwid: null
-  },
-  'TEST-LICENSE-123': {
-    valid: true,
-    username: 'test_user',
-    expires: '2025-06-30',
-    hwid: null
   }
 };
 
 const server = http.createServer((req, res) => {
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json');
 
-  const url = new URL(req.url, `http://${req.headers.host}`);
+  console.log('Request:', req.url);
 
-  if (url.pathname === '/check-license') {
-    const key = url.searchParams.get('key');
-    const hwid = url.searchParams.get('hwid');
+  if (req.url.startsWith('/check-license')) {
+    const params = new URLSearchParams(req.url.split('?')[1]);
+    const key = params.get('key');
+    const hwid = params.get('hwid');
+
+    console.log('Key:', key, 'HWID:', hwid);
 
     if (!key) {
       res.writeHead(400);
-      res.end(JSON.stringify({ error: 'License key required' }));
-      return;
+      return res.end(JSON.stringify({ error: 'License key required' }));
     }
 
     const license = licenses[key];
 
     if (!license) {
       res.writeHead(200);
-      res.end(JSON.stringify({
-        valid: false,
-        message: 'Invalid license key'
-      }));
-      return;
+      return res.end(JSON.stringify({ valid: false, message: 'Invalid license' }));
     }
 
-    // HWID check
     if (license.hwid && license.hwid !== hwid) {
       res.writeHead(200);
-      res.end(JSON.stringify({
-        valid: false,
-        message: 'License already bound to another machine'
-      }));
-      return;
+      return res.end(JSON.stringify({ valid: false, message: 'HWID mismatch' }));
     }
 
-    // Bind HWID on first use
     if (!license.hwid && hwid) {
       license.hwid = hwid;
-    }
-
-    // Check expiry
-    const now = new Date();
-    const expiry = new Date(license.expires);
-    if (now > expiry) {
-      res.writeHead(200);
-      res.end(JSON.stringify({
-        valid: false,
-        message: 'License expired'
-      }));
-      return;
     }
 
     res.writeHead(200);
@@ -79,11 +51,11 @@ const server = http.createServer((req, res) => {
     }));
   } else {
     res.writeHead(404);
-    res.end(JSON.stringify({ error: 'Not found' }));
+    res.end(JSON.stringify({ error: 'Not found', path: req.url }));
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
-  console.log(`License API running on port ${PORT}`);
+  console.log(`API running on port ${PORT}`);
 });
